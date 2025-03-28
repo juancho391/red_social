@@ -102,3 +102,5 @@ celerybeat.pid
 
 # Docker
 docker-compose.override.yml
+Docker-compose.yml
+Dockerfile
