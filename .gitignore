@@ -1,0 +1,104 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Django stuff:
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+
+# If you're using PostgreSQL, MySQL, etc. and prefer to ignore database dumps:
+*.dump
+*.sql
+
+# Django migrations
+*/migrations/*
+
+# Ignore SQLite database files (if applicable)
+*.sqlite3
+
+# Environments
+.env
+.env.local
+.env.*.local
+
+# Node.js related files (for frontend or assets)
+node_modules/
+npm-debug.log
+yarn-error.log
+yarn-debug.log
+
+# Python virtual environment
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Ignore pip dependency resolver files
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Ignore .pytest_cache if you're using pytest
+.pytest_cache/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# pyenv
+.python-version
+
+# dotenv
+*.env
+
+# IDE specific files
+.vscode/
+.idea/
+
+# Celery task queue logs
+celerybeat-schedule
+celerybeat.pid
+
+# Docker
+docker-compose.override.yml
