@@ -1,11 +1,9 @@
 from rest_framework import serializers
-from models import User
+from .models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
-    description = serializers.TextField(required=False)
-    profile_image = serializers.CharField(required=False)
-    id = serializers.IntegerField(read_only=True)
+    password = serializers.CharField(write_only=True)
 
     class Meta:
         model = User
@@ -20,3 +18,9 @@ class UserSerializer(serializers.ModelSerializer):
             "description",
             "profile_img",
         ]
+
+    def validate_username(self, value):
+        # Verificar que el username tenga al menos una letra
+        if not any(char.isalpha() for char in value):
+            raise serializers.ValidationError("The username has to contain letters.")
+        return value
