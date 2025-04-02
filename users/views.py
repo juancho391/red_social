@@ -125,7 +125,7 @@ class ProfileImage(APIView):
                     "status": status.HTTP_400_BAD_REQUEST,
                 }
             )
-        file_name = f"profile_images/{user.username}"
+        file_name = f"{user.username}"
 
         s3_client = boto3.client(
             "s3",
@@ -138,7 +138,8 @@ class ProfileImage(APIView):
             s3_client.upload_fileobj(
                 profile_img,
                 settings.AWS_STORAGE_BUCKET_NAME,
-                file_name,
+                f"profile_images/{file_name}",
+                ExtraArgs={"ContentType": "image/png"},
             )
 
             file_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.{settings.AWS_S3_REGION_NAME}.amazonaws.com/profile_images/{file_name}"
