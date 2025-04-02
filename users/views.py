@@ -4,6 +4,12 @@ from .models import User
 from .serializers import UserSerializer
 from rest_framework.response import Response
 from rest_framework import status
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+import os
+import boto3
+from django.conf import settings
+from uuid import uuid4
 
 
 class Register(APIView):
@@ -50,3 +56,99 @@ class Login(APIView):
                 "message": "password invalid",
             }
         )
+
+
+# Endpoint para el crud la descripcion del perfil del usuario
+class ProfileDescription(APIView):
+    def get(self, request, pk):
+        user = User.objects.get(id=pk)
+        return Response({"description": user.description})
+
+    def put(self, request, pk):
+        try:
+            user = User.objects.get(id=pk)
+        except User.DoesNotExist:
+            return Response(
+                {
+                    "error": "User not found",
+                    "status": status.HTTP_400_BAD_REQUEST,
+                }
+            )
+        user.description = request.data.get("description")
+        user.save()
+        return Response(
+            {
+                "status": status.HTTP_200_OK,
+                "user": UserSerializer(user).data,
+                "message": "Description has been update",
+            }
+        )
+
+    def delete(self, request, pk):
+        try:
+            user = User.objects.get(id=pk)
+        except User.DoesNotExist:
+            return Response(
+                {
+                    "error": "User not found",
+                    "status": status.HTTP_400_BAD_REQUEST,
+                }
+            )
+        user.description = None
+        user.save()
+        return Response(
+            {
+                "status": status.HTTP_200_OK,
+                "user": UserSerializer(user).data,
+                "message": "Description has been delete",
+            }
+        )
+
+
+# Endpoint para cargar la imagen del perfil del usuario
+class ProfileImage(APIView):
+    def post(self, request, pk):
+        try:
+            user = User.objects.get(id=pk)
+        except User.DoesNotExist:
+            return Response(
+                {
+                    "error": "User not found",
+                    "status": status.HTTP_400_BAD_REQUEST,
+                }
+            )
+        profile_img = request.FILES.get("profile_img")
+        if not profile_img:
+            return Response(
+                {
+                    "error": "no image provide",
+                    "status": status.HTTP_400_BAD_REQUEST,
+                }
+            )
+        file_name = f"profile_images/{user.username}"
+
+        s3_client = boto3.client(
+            "s3",
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            region_name=settings.AWS_S3_REGION_NAME,
+        )
+
+        try:
+            s3_client.upload_fileobj(
+                profile_img,
+                settings.AWS_STORAGE_BUCKET_NAME,
+                file_name,
+            )
+
+            file_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.{settings.AWS_S3_REGION_NAME}.amazonaws.com/profile_images/{file_name}"
+
+            user.profile_img = file_url
+            user.save()
+
+            return Response({"profile_img": file_url, "status": status.HTTP_200_OK})
+
+        except Exception as e:
+            return Response(
+                {"error": str(e), "status": status.HTTP_500_INTERNAL_SERVER_ERROR}
+            )

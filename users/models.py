@@ -10,7 +10,7 @@ class User(AbstractUser):
     last_name = models.CharField(max_length=150, null=False)
     email = models.EmailField(null=False)
     description = models.TextField(null=True, blank=True)
-    profile_img = models.CharField(max_length=100, null=True, blank=True)
+    profile_img = models.CharField(max_length=500, null=True, blank=True)
     birth_date = models.DateTimeField(null=False)
     groups = models.ManyToManyField(
         "auth.Group",
