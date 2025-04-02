@@ -115,7 +115,7 @@ class ProfileDescription(APIView):
 
 # Endpoint para cargar la imagen del perfil del usuario
 class ProfileImage(APIView):
-    def post(self, request, pk):
+    def put(self, request, pk):
         try:
             user = User.objects.get(id=pk)
 
@@ -123,7 +123,7 @@ class ProfileImage(APIView):
             if not profile_img:
                 return Response(
                     {
-                        "error": "No se proporcionó ninguna imagen",
+                        "error": "Image has not been provide",
                         "status": status.HTTP_400_BAD_REQUEST,
                     }
                 )
@@ -148,7 +148,7 @@ class ProfileImage(APIView):
         except User.DoesNotExist:
             return Response(
                 {
-                    "error": "Usuario no encontrado",
+                    "error": "user not found",
                     "status": status.HTTP_400_BAD_REQUEST,
                 }
             )
