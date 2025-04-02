@@ -7,9 +7,17 @@ from rest_framework import status
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 import os
-import boto3
 from django.conf import settings
-from uuid import uuid4
+import boto3
+
+
+# Configuramos el cliente de s3
+s3_client = boto3.client(
+    "s3",
+    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+    region_name=settings.AWS_S3_REGION_NAME,
+)
 
 
 class Register(APIView):
@@ -110,31 +118,17 @@ class ProfileImage(APIView):
     def post(self, request, pk):
         try:
             user = User.objects.get(id=pk)
-        except User.DoesNotExist:
-            return Response(
-                {
-                    "error": "User not found",
-                    "status": status.HTTP_400_BAD_REQUEST,
-                }
-            )
-        profile_img = request.FILES.get("profile_img")
-        if not profile_img:
-            return Response(
-                {
-                    "error": "no image provide",
-                    "status": status.HTTP_400_BAD_REQUEST,
-                }
-            )
-        file_name = f"{user.username}"
 
-        s3_client = boto3.client(
-            "s3",
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-            region_name=settings.AWS_S3_REGION_NAME,
-        )
-
-        try:
+            profile_img = request.FILES.get("profile_img")
+            if not profile_img:
+                return Response(
+                    {
+                        "error": "No se proporcionó ninguna imagen",
+                        "status": status.HTTP_400_BAD_REQUEST,
+                    }
+                )
+            # subir la imagen a s3
+            file_name = f"{user.username}"
             s3_client.upload_fileobj(
                 profile_img,
                 settings.AWS_STORAGE_BUCKET_NAME,
@@ -142,13 +136,22 @@ class ProfileImage(APIView):
                 ExtraArgs={"ContentType": "image/png"},
             )
 
+            # generar la url
             file_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.{settings.AWS_S3_REGION_NAME}.amazonaws.com/profile_images/{file_name}"
 
+            # actualizar el perfil del usuario
             user.profile_img = file_url
             user.save()
 
             return Response({"profile_img": file_url, "status": status.HTTP_200_OK})
 
+        except User.DoesNotExist:
+            return Response(
+                {
+                    "error": "Usuario no encontrado",
+                    "status": status.HTTP_400_BAD_REQUEST,
+                }
+            )
         except Exception as e:
             return Response(
                 {"error": str(e), "status": status.HTTP_500_INTERNAL_SERVER_ERROR}
