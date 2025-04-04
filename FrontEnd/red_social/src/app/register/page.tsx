@@ -21,7 +21,7 @@ export default function Register() {
     setValue(value);
   }
 
-  const onSubmit = async () => {
+  const onSubmit = () => {
     console.log("enviando data");
     const data = {
       username: username,
@@ -32,22 +32,28 @@ export default function Register() {
       birth_date: birth_date,
     };
 
-    try {
-      const response = await fetch("http://127.0.0.1:8000/users/register/", {
+    return new Promise((resolve, reject) => {
+      fetch("http://127.0.0.1:8000/users/register/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        throw new Error("Error en la solicitud");
-      }
-      const result = await response.json();
-      console.log(result);
-      manejarRedireccion();
-    } catch (error) {
-      console.log("Error : ", error);
-    }
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Error en la solicitud");
+          }
+          return response.json();
+        })
+        .then((result) => {
+          console.log(result);
+          manejarRedireccion();
+          resolve(result);
+        })
+        .catch((error) => {
+          console.log("Error : ", error);
+          reject(error);
+        });
+    });
   };
 
   return (
