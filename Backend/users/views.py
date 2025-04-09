@@ -110,7 +110,7 @@ class ProfileDescription(APIView):
 class ProfileImage(APIView):
     def put(self, request, pk):
         try:
-            user = User.objects.get(id=pk)
+            user = get_object_or_404(User, id=pk)
 
             profile_img = request.FILES.get("profile_img")
             if not profile_img:
@@ -137,14 +137,6 @@ class ProfileImage(APIView):
             user.save()
 
             return Response({"profile_img": file_url, "status": status.HTTP_200_OK})
-
-        except User.DoesNotExist:
-            return Response(
-                {
-                    "error": "user not found",
-                    "status": status.HTTP_400_BAD_REQUEST,
-                }
-            )
         except Exception as e:
             return Response(
                 {"error": str(e), "status": status.HTTP_500_INTERNAL_SERVER_ERROR}
