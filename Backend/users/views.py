@@ -1,7 +1,11 @@
 from django.shortcuts import render, get_object_or_404
 from rest_framework.views import APIView
 from .models import User
-from .serializers import UserSerializer
+from .serializers import (
+    UserSerializer,
+    RegisterUserSerializer,
+    UpdateUserDescriptionSerializer,
+)
 from rest_framework.response import Response
 from rest_framework import status
 from django.core.files.storage import default_storage
@@ -22,18 +26,16 @@ s3_client = boto3.client(
 
 class Register(APIView):
     def post(self, request):
-        serializer = UserSerializer(data=request.data)
+        serializer = RegisterUserSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             user = User.objects.get(username=request.data.get("username"))
-            user.set_password(request.data.get("password"))
-            user.save()
 
             return Response(
                 {
                     "status": status.HTTP_200_OK,
                     "message": "User Resgister succesfully",
-                    "user": serializer.data,
+                    "user": UserSerializer(user).data,
                 }
             )
 
@@ -48,7 +50,6 @@ class Register(APIView):
 
 class Login(APIView):
     def post(self, request):
-        # user = User.objects.get(username=request.data.get("username"))
         user = get_object_or_404(User, username=request.data.get("username"))
         if user.check_password(request.data.get("password")):
             return Response(
@@ -61,7 +62,7 @@ class Login(APIView):
         return Response(
             {
                 "status": status.HTTP_400_BAD_REQUEST,
-                "message": "password invalid",
+                "message": "invalid credentials",
             }
         )
 
@@ -72,28 +73,26 @@ class ProfileDescription(APIView):
         user = get_object_or_404(User, id=pk)
         return Response({"description": user.description})
 
-    def put(self, request, pk):
+    def patch(self, request, pk):
         user = get_object_or_404(User, id=pk)
-        description = request.data.get("description")
-        if not description:
+        serializer = UpdateUserDescriptionSerializer(user, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
             return Response(
                 {
-                    "error": "Description has not been provided",
-                    "status": status.HTTP_400_BAD_REQUEST,
+                    "status": status.HTTP_200_OK,
+                    "user": UserSerializer(user).data,
+                    "message": "Description has been updated",
                 }
             )
-        user.description = description
-        user.save()
         return Response(
             {
-                "status": status.HTTP_200_OK,
-                "user": UserSerializer(user).data,
-                "message": "Description has been updated",
+                "error": "Description has not been provided",
+                "status": status.HTTP_400_BAD_REQUEST,
             }
         )
 
     def delete(self, request, pk):
-
         user = get_object_or_404(User, id=pk)
         user.description = None
         user.save()
