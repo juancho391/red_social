@@ -69,46 +69,39 @@ class Login(APIView):
 # Endpoint para el crud la descripcion del perfil del usuario
 class ProfileDescription(APIView):
     def get(self, request, pk):
-        user = User.objects.get(id=pk)
+        user = get_object_or_404(User, id=pk)
         return Response({"description": user.description})
 
     def put(self, request, pk):
-        try:
-            user = User.objects.get(id=pk)
-        except User.DoesNotExist:
+        user = get_object_or_404(User, id=pk)
+        description = request.data.get("description")
+        if not description:
             return Response(
                 {
-                    "error": "User not found",
+                    "error": "Description has not been provided",
                     "status": status.HTTP_400_BAD_REQUEST,
                 }
             )
-        user.description = request.data.get("description")
+        user.description = description
         user.save()
         return Response(
             {
                 "status": status.HTTP_200_OK,
                 "user": UserSerializer(user).data,
-                "message": "Description has been update",
+                "message": "Description has been updated",
             }
         )
 
     def delete(self, request, pk):
-        try:
-            user = User.objects.get(id=pk)
-        except User.DoesNotExist:
-            return Response(
-                {
-                    "error": "User not found",
-                    "status": status.HTTP_400_BAD_REQUEST,
-                }
-            )
+
+        user = get_object_or_404(User, id=pk)
         user.description = None
         user.save()
         return Response(
             {
                 "status": status.HTTP_200_OK,
                 "user": UserSerializer(user).data,
-                "message": "Description has been delete",
+                "message": "Description has been deleted",
             }
         )
 
