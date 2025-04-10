@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from rest_framework import viewsets
 from .models import User
-from .serializers import UserSerializer, RegisterUserSerializer
+from .serializers import UserSerializer, RegisterUserSerializer, LoginUserSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAdminUser, AllowAny
@@ -47,33 +47,21 @@ class UserViewSet(viewsets.ModelViewSet):
         detail=False, methods=["post"], url_path="login", permission_classes=[AllowAny]
     )
     def login(self, request):
+        serializer = LoginUserSerializer(data=request.data)
         user = get_object_or_404(User, username=request.data.get("username"))
-        if user.check_password(request.data.get("password")):
-            return Response(
-                {
-                    "status": status.HTTP_200_OK,
-                    "message": "User Login succesfully",
-                    "user": UserSerializer(user).data,
-                }
-            )
+        if serializer.is_valid():
+            if user.check_password(request.data.get("password")):
+                return Response(
+                    {
+                        "message": "User Login succesfully",
+                        "user": UserSerializer(user).data,
+                    },
+                    status=status.HTTP_200_OK,
+                )
         return Response(
-            {
-                "status": status.HTTP_400_BAD_REQUEST,
-                "message": "invalid credentials",
-            }
+            {"message": "Error", "error": serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST,
         )
-
-    # @action(
-    #     detail=True,
-    #     methods=["put", "get"],
-    #     permission_classes=[AllowAny],
-    #     url_path="description",
-    # )
-    # def update_description(self, request, pk=None):
-    #     user = self.get_object()
-    #     user.description = request.data.get("description")
-    #     user.save()
-    #     return Response({"message": "Description updated."})
 
     @action(
         detail=True,
