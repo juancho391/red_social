@@ -8,7 +8,9 @@ from rest_framework.permissions import IsAdminUser, AllowAny
 from rest_framework.decorators import action
 from django.conf import settings
 import boto3
-
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.tokens import RefreshToken
 
 # Configuramos el cliente de s3
 s3_client = boto3.client(
@@ -22,7 +24,7 @@ s3_client = boto3.client(
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    # permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated]
 
     @action(
         detail=False,
@@ -51,10 +53,15 @@ class UserViewSet(viewsets.ModelViewSet):
         user = get_object_or_404(User, username=request.data.get("username"))
         if serializer.is_valid():
             if user.check_password(request.data.get("password")):
+                refresh = RefreshToken.for_user(user=user)
                 return Response(
                     {
                         "message": "User Login succesfully",
                         "user": UserSerializer(user).data,
+                        "token": {
+                            "access": str(refresh.access_token),
+                            "refresh": str(refresh),
+                        },
                     },
                     status=status.HTTP_200_OK,
                 )
@@ -67,7 +74,7 @@ class UserViewSet(viewsets.ModelViewSet):
         detail=True,
         methods=["put"],
         url_path="profile_image",
-        permission_classes=[AllowAny],
+        permission_classes=[IsAuthenticated],
     )
     def upload_profile_image(self, request, pk):
         try:
