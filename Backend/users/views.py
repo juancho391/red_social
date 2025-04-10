@@ -24,49 +24,6 @@ s3_client = boto3.client(
 )
 
 
-class Register(APIView):
-    def post(self, request):
-        serializer = RegisterUserSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            user = User.objects.get(username=request.data.get("username"))
-
-            return Response(
-                {
-                    "status": status.HTTP_200_OK,
-                    "message": "User Resgister succesfully",
-                    "user": UserSerializer(user).data,
-                }
-            )
-
-        return Response(
-            {
-                "status": status.HTTP_400_BAD_REQUEST,
-                "message": "Error",
-                "error": serializer.errors,
-            }
-        )
-
-
-class Login(APIView):
-    def post(self, request):
-        user = get_object_or_404(User, username=request.data.get("username"))
-        if user.check_password(request.data.get("password")):
-            return Response(
-                {
-                    "status": status.HTTP_200_OK,
-                    "message": "User Login succesfully",
-                    "user": UserSerializer(user).data,
-                }
-            )
-        return Response(
-            {
-                "status": status.HTTP_400_BAD_REQUEST,
-                "message": "invalid credentials",
-            }
-        )
-
-
 # Endpoint para el crud la descripcion del perfil del usuario
 class ProfileDescription(APIView):
     def get(self, request, pk):
@@ -103,40 +60,3 @@ class ProfileDescription(APIView):
                 "message": "Description has been deleted",
             }
         )
-
-
-# Endpoint para cargar la imagen del perfil del usuario
-class ProfileImage(APIView):
-    def put(self, request, pk):
-        try:
-            user = get_object_or_404(User, id=pk)
-
-            profile_img = request.FILES.get("profile_img")
-            if not profile_img:
-                return Response(
-                    {
-                        "error": "Image has not been provide",
-                        "status": status.HTTP_400_BAD_REQUEST,
-                    }
-                )
-            # subir la imagen a s3
-            file_name = f"{user.username}"
-            s3_client.upload_fileobj(
-                profile_img,
-                settings.AWS_STORAGE_BUCKET_NAME,
-                f"profile_images/{file_name}",
-                ExtraArgs={"ContentType": "image/png"},
-            )
-
-            # generar la url
-            file_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.{settings.AWS_S3_REGION_NAME}.amazonaws.com/profile_images/{file_name}"
-
-            # actualizar el perfil del usuario
-            user.profile_img = file_url
-            user.save()
-
-            return Response({"profile_img": file_url, "status": status.HTTP_200_OK})
-        except Exception as e:
-            return Response(
-                {"error": str(e), "status": status.HTTP_500_INTERNAL_SERVER_ERROR}
-            )
