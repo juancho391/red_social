@@ -8,7 +8,7 @@ from django.contrib.auth.models import AbstractUser
 class User(AbstractUser):
     first_name = models.CharField(max_length=150, null=False)
     last_name = models.CharField(max_length=150, null=False)
-    email = models.EmailField(null=False)
+    email = models.EmailField(null=False, unique=True)
     description = models.TextField(null=True, blank=True)
     profile_img = models.CharField(max_length=500, null=True, blank=True)
     birth_date = models.DateTimeField(null=False)
