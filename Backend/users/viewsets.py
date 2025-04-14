@@ -24,12 +24,13 @@ s3_client = boto3.client(
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     @action(
         detail=False,
         methods=["post"],
         url_path="register",
+        serializer_class=RegisterUserSerializer,
         permission_classes=[AllowAny],
     )
     def register(self, request):
@@ -46,7 +47,11 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(
-        detail=False, methods=["post"], url_path="login", permission_classes=[AllowAny]
+        detail=False,
+        methods=["post"],
+        url_path="login",
+        permission_classes=[AllowAny],
+        serializer_class=LoginUserSerializer,
     )
     def login(self, request):
         serializer = LoginUserSerializer(data=request.data)
