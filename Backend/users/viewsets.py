@@ -15,7 +15,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    # permission_classes = [IsAuthenticated]
 
     @action(
         detail=False,
@@ -70,7 +70,7 @@ class UserViewSet(viewsets.ModelViewSet):
         detail=True,
         methods=["put"],
         url_path="profile_image",
-        permission_classes=[IsAuthenticated],
+        # permission_classes=[IsAuthenticated],
     )
     def upload_profile_image(self, request, pk):
         try:

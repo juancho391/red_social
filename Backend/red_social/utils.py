@@ -10,9 +10,12 @@ s3_client = boto3.client(
 )
 
 
-def upload_image(file, folder, username):
+def upload_image(file, folder, username, post_id=None):
     try:
-        file_name = f"{username}"
+        if folder == "profile_images":
+            file_name = f"{username}"
+        elif folder == "post_images":
+            file_name = f"{username}_{post_id}"
         s3_client.upload_fileobj(
             file,
             settings.AWS_STORAGE_BUCKET_NAME,
@@ -21,7 +24,6 @@ def upload_image(file, folder, username):
         )
 
         # Generar la url
-
         file_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.{settings.AWS_S3_REGION_NAME}.amazonaws.com/{folder}/{file_name}"
         return file_url
     except Exception as e:
