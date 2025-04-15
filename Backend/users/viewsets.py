@@ -1,35 +1,27 @@
 from django.shortcuts import render, get_object_or_404
 from rest_framework import viewsets
+from red_social.utils import upload_image
 from .models import User
 from .serializers import UserSerializer, RegisterUserSerializer, LoginUserSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAdminUser, AllowAny
 from rest_framework.decorators import action
-from django.conf import settings
-import boto3
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
-
-# Configuramos el cliente de s3
-s3_client = boto3.client(
-    "s3",
-    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-    region_name=settings.AWS_S3_REGION_NAME,
-)
 
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     @action(
         detail=False,
         methods=["post"],
         url_path="register",
+        serializer_class=RegisterUserSerializer,
         permission_classes=[AllowAny],
     )
     def register(self, request):
@@ -46,7 +38,11 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(
-        detail=False, methods=["post"], url_path="login", permission_classes=[AllowAny]
+        detail=False,
+        methods=["post"],
+        url_path="login",
+        permission_classes=[AllowAny],
+        serializer_class=LoginUserSerializer,
     )
     def login(self, request):
         serializer = LoginUserSerializer(data=request.data)
@@ -74,7 +70,7 @@ class UserViewSet(viewsets.ModelViewSet):
         detail=True,
         methods=["put"],
         url_path="profile_image",
-        permission_classes=[IsAuthenticated],
+        # permission_classes=[IsAuthenticated],
     )
     def upload_profile_image(self, request, pk):
         try:
@@ -88,18 +84,9 @@ class UserViewSet(viewsets.ModelViewSet):
                         "status": status.HTTP_400_BAD_REQUEST,
                     }
                 )
-            # subir la imagen a s3
-            file_name = f"{user.username}"
-            s3_client.upload_fileobj(
-                profile_img,
-                settings.AWS_STORAGE_BUCKET_NAME,
-                f"profile_images/{file_name}",
-                ExtraArgs={"ContentType": "image/png"},
+            file_url = upload_image(
+                file=profile_img, folder="profile_images", username=user.username
             )
-
-            # generar la url
-            file_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.{settings.AWS_S3_REGION_NAME}.amazonaws.com/profile_images/{file_name}"
-
             # actualizar el perfil del usuario
             user.profile_img = file_url
             user.save()

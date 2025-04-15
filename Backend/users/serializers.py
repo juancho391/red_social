@@ -1,9 +1,12 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from .models import User
+from posts.serializers import PostSerializer
 
 
 class UserSerializer(serializers.ModelSerializer):
+    posts = PostSerializer(many=True, read_only=True)
+
     class Meta:
         model = User
         fields = [
@@ -15,6 +18,7 @@ class UserSerializer(serializers.ModelSerializer):
             "birth_date",
             "description",
             "profile_img",
+            "posts",
         ]
 
 
