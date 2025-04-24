@@ -8,6 +8,7 @@ from users.models import User
 
 
 class PostSerializer(serializers.ModelSerializer):
+    post_img = serializers.CharField(read_only=True)
 
     class Meta:
         model = Posts

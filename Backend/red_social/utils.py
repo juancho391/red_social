@@ -28,3 +28,10 @@ def upload_image(file, folder, username, post_id=None):
         return file_url
     except Exception as e:
         return {"error": str(e), "message": "Upload image to s3 has been failed"}
+
+
+# Funcion para eliminar la imagen de s3
+
+# def delete_image(file_url):
+#     try:
+#         file_name = file_url.split("/")[-1]

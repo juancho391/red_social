@@ -12,18 +12,21 @@ from rest_framework import status
 class PostsViewset(viewsets.ModelViewSet):
     queryset = Posts.objects.all()
     serializer_class = PostSerializer
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_serializer_class(self):
         if self.action == "create":
             return PostCreateSerializer
+        if self.action == "destroy":
+            return PostSerializer
         return PostSerializer
 
     def create(self, request):
         try:
-            user = get_object_or_404(User, id=request.data.get("id_user"))
+            user = get_object_or_404(User, id=request.user.id)
             post_img = request.FILES.get("post_img")
-
+            # Añado el id del usuario autenticado a la request
+            request.data["id_user"] = user.id
             serializer = PostCreateSerializer(data=request.data)
             if serializer.is_valid():
                 post = serializer.save()
@@ -40,9 +43,12 @@ class PostsViewset(viewsets.ModelViewSet):
                     post_id=post.id,
                     username=user.username,
                 )
+                print(file_url)
                 # actualizo la url del post
                 post.post_img = file_url
                 post.save()
+
+                post.refresh_from_db()
 
             return Response(
                 {
@@ -54,5 +60,37 @@ class PostsViewset(viewsets.ModelViewSet):
         except Exception as e:
             return Response(
                 {"error": str(e), "message": "Post creation failed"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    def destroy(self, request, **kwargs):
+        try:
+            user = get_object_or_404(User, id=request.user.id)
+            post = get_object_or_404(Posts, id=self.kwargs["pk"])
+            # verifico que el post pertenece al usuario
+            print(f"user id : {user.id}")
+            print(f"post iduser : {post.id_user.id}")
+            if post.id_user.id != user.id:
+                return Response(
+                    {
+                        "message": "You cant delete this post because you are not the owner"
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            # Elimino el post
+            post.delete()
+
+            # Falta eliminar la imagen de s3....
+
+            return Response(
+                {
+                    "message": "Post deleted succesfully",
+                    "post": PostSerializer(post).data,
+                },
+                status=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e), "message": "Post Deletion failed"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
