@@ -77,10 +77,11 @@ class PostsViewset(viewsets.ModelViewSet):
                     },
                     status=status.HTTP_403_FORBIDDEN,
                 )
-            # Elimino el post
-            post.delete()
+            # Elimino la imagen de s3
+            if post.post_img:
+                pass
 
-            # Falta eliminar la imagen de s3....
+            post.delete()
 
             return Response(
                 {
